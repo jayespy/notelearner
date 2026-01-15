@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { MusicalNote, NoteName, AppMode, Accidental } from '../types';
 import StaffRenderer from './StaffRenderer';
 
@@ -16,16 +16,17 @@ interface NoteButton {
   label: string;
   matches: { name: NoteName; accidental: Accidental }[];
   id: string;
+  shortcut?: string;
 }
 
 const NATURAL_NOTES: NoteName[] = ['C', 'D', 'E', 'F', 'G', 'A', 'B'];
 
 const ENHARMONIC_BUTTONS: NoteButton[] = [
-  { label: 'C♯ / D♭', id: 'cs-db', matches: [{ name: 'C', accidental: 'sharp' }, { name: 'D', accidental: 'flat' }] },
-  { label: 'D♯ / E♭', id: 'ds-eb', matches: [{ name: 'D', accidental: 'sharp' }, { name: 'E', accidental: 'flat' }] },
-  { label: 'F♯ / G♭', id: 'fs-gb', matches: [{ name: 'F', accidental: 'sharp' }, { name: 'G', accidental: 'flat' }] },
-  { label: 'G♯ / A♭', id: 'gs-ab', matches: [{ name: 'G', accidental: 'sharp' }, { name: 'A', accidental: 'flat' }] },
-  { label: 'A♯ / B♭', id: 'as-bb', matches: [{ name: 'A', accidental: 'sharp' }, { name: 'B', accidental: 'flat' }] },
+  { label: 'C♯ / D♭', id: 'cs-db', shortcut: '1', matches: [{ name: 'C', accidental: 'sharp' }, { name: 'D', accidental: 'flat' }] },
+  { label: 'D♯ / E♭', id: 'ds-eb', shortcut: '2', matches: [{ name: 'D', accidental: 'sharp' }, { name: 'E', accidental: 'flat' }] },
+  { label: 'F♯ / G♭', id: 'fs-gb', shortcut: '3', matches: [{ name: 'F', accidental: 'sharp' }, { name: 'G', accidental: 'flat' }] },
+  { label: 'G♯ / A♭', id: 'gs-ab', shortcut: '4', matches: [{ name: 'G', accidental: 'sharp' }, { name: 'A', accidental: 'flat' }] },
+  { label: 'A♯ / B♭', id: 'as-bb', shortcut: '5', matches: [{ name: 'A', accidental: 'sharp' }, { name: 'B', accidental: 'flat' }] },
 ];
 
 const Flashcard: React.FC<FlashcardProps> = ({ note, onNext, showAnswer, setShowAnswer, mode, includeAccidentals }) => {
@@ -40,7 +41,7 @@ const Flashcard: React.FC<FlashcardProps> = ({ note, onNext, showAnswer, setShow
     setIsAutoProgressing(false);
   }, [note]);
 
-  const handleGuess = (button: NoteButton) => {
+  const handleGuess = useCallback((button: NoteButton) => {
     if (showAnswer || isAutoProgressing) return;
 
     const isCorrect = button.matches.some(
@@ -59,7 +60,46 @@ const Flashcard: React.FC<FlashcardProps> = ({ note, onNext, showAnswer, setShow
         setWrongButtonIds([...wrongButtonIds, button.id]);
       }
     }
-  };
+  }, [showAnswer, isAutoProgressing, note, onNext, wrongButtonIds]);
+
+  // Keyboard support
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const key = e.key.toLowerCase();
+
+      // Controls: Space or Enter
+      if (key === ' ' || key === 'enter') {
+        if (showAnswer) {
+          onNext(true);
+        } else if (mode === 'REVEAL') {
+          setShowAnswer(true);
+        }
+        return;
+      }
+
+      if (showAnswer || isAutoProgressing || mode === 'REVEAL') return;
+
+      // Natural keys C-D-E-F-G-A-B
+      if (['a', 'b', 'c', 'd', 'e', 'f', 'g'].includes(key)) {
+        const name = key.toUpperCase() as NoteName;
+        const btn: NoteButton = {
+          label: name,
+          id: `nat-${name}`,
+          matches: [{ name, accidental: 'none' }]
+        };
+        handleGuess(btn);
+      }
+
+      // Accidental keys 1-5
+      if (includeAccidentals && ['1', '2', '3', '4', '5'].includes(key)) {
+        const btn = ENHARMONIC_BUTTONS[parseInt(key) - 1];
+        handleGuess(btn);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [showAnswer, isAutoProgressing, mode, includeAccidentals, handleGuess, onNext, setShowAnswer]);
 
   const getAccidentalSymbol = (acc: Accidental) => {
     if (acc === 'sharp') return '♯';
@@ -71,6 +111,7 @@ const Flashcard: React.FC<FlashcardProps> = ({ note, onNext, showAnswer, setShow
     const naturalButtons: NoteButton[] = NATURAL_NOTES.map(name => ({
       label: name,
       id: `nat-${name}`,
+      shortcut: name,
       matches: [{ name, accidental: 'none' }]
     }));
 
@@ -87,13 +128,14 @@ const Flashcard: React.FC<FlashcardProps> = ({ note, onNext, showAnswer, setShow
                 onClick={() => handleGuess(btn)}
                 disabled={isWrong || showAnswer || isAutoProgressing}
                 className={`
-                  py-4 rounded-xl font-bold text-lg transition-all transform active:scale-95
+                  relative py-4 rounded-xl font-bold text-lg transition-all transform active:scale-95
                   ${isCorrect ? 'bg-emerald-500 text-white shadow-emerald-200 shadow-lg' : 
                     isWrong ? 'bg-red-50 text-red-300 cursor-not-allowed border-red-100' : 
                     'bg-slate-50 text-slate-600 hover:bg-indigo-50 hover:text-indigo-600 border border-slate-100'}
                 `}
               >
                 {btn.label}
+                <span className="absolute top-1 right-2 text-[8px] opacity-30 font-mono">{btn.shortcut}</span>
               </button>
             );
           })}
@@ -114,13 +156,14 @@ const Flashcard: React.FC<FlashcardProps> = ({ note, onNext, showAnswer, setShow
                 onClick={() => handleGuess(btn)}
                 disabled={isWrong || showAnswer || isAutoProgressing}
                 className={`
-                  py-4 rounded-lg font-bold text-sm transition-all transform active:scale-95 border-2
+                  relative py-4 rounded-lg font-bold text-sm transition-all transform active:scale-95 border-2
                   ${isCorrect ? 'bg-emerald-500 border-emerald-400 text-white shadow-lg' : 
                     isWrong ? 'bg-red-50 border-red-100 text-red-200 cursor-not-allowed' : 
                     'bg-white text-slate-700 hover:border-indigo-200 hover:text-indigo-600 border-slate-100 shadow-sm'}
                 `}
               >
                 {btn.label}
+                <span className="absolute top-0.5 right-1 text-[7px] opacity-30 font-mono uppercase">{btn.shortcut}</span>
               </button>
             );
           })}
@@ -137,13 +180,14 @@ const Flashcard: React.FC<FlashcardProps> = ({ note, onNext, showAnswer, setShow
                 onClick={() => handleGuess(btn)}
                 disabled={isWrong || showAnswer || isAutoProgressing}
                 className={`
-                  py-3 rounded-lg font-bold text-[10px] transition-all transform active:scale-95 border-b-4
+                  relative py-3 rounded-lg font-bold text-[10px] transition-all transform active:scale-95 border-b-4
                   ${isCorrect ? 'bg-emerald-600 border-emerald-700 text-white shadow-lg translate-y-0.5' : 
                     isWrong ? 'bg-red-100 border-red-200 text-red-300 cursor-not-allowed' : 
                     'bg-slate-800 text-indigo-100 border-slate-900 hover:bg-slate-700 active:translate-y-0.5'}
                 `}
               >
                 {btn.label}
+                <span className="absolute top-0.5 right-1 text-[7px] opacity-40 font-mono">{btn.shortcut}</span>
               </button>
             );
           })}
@@ -172,8 +216,9 @@ const Flashcard: React.FC<FlashcardProps> = ({ note, onNext, showAnswer, setShow
             </div>
           )}
 
-          <div className="text-slate-400 text-sm font-semibold tracking-widest uppercase mb-6">
+          <div className="text-slate-400 text-sm font-semibold tracking-widest uppercase mb-6 flex items-center gap-2">
             {mode === 'REVEAL' ? 'Identify the Note' : 'Select the Note'}
+            <span className="px-1.5 py-0.5 bg-slate-100 rounded text-[9px] lowercase font-mono">keyboard enabled</span>
           </div>
           
           <StaffRenderer note={note} />
@@ -181,9 +226,10 @@ const Flashcard: React.FC<FlashcardProps> = ({ note, onNext, showAnswer, setShow
           {mode === 'REVEAL' ? (
             <button 
               onClick={() => setShowAnswer(true)}
-              className="mt-12 text-slate-400 text-sm italic hover:text-indigo-500 transition-colors"
+              className="mt-12 text-slate-400 text-sm italic hover:text-indigo-500 transition-colors flex flex-col items-center gap-1"
             >
-              Click card to reveal answer
+              <span>Click card to reveal answer</span>
+              <span className="text-[10px] font-mono opacity-60">or press [SPACE]</span>
             </button>
           ) : (
             <div className="mt-10 w-full">
@@ -218,9 +264,10 @@ const Flashcard: React.FC<FlashcardProps> = ({ note, onNext, showAnswer, setShow
               e.stopPropagation();
               onNext(true);
             }}
-            className="mt-10 px-12 py-4 bg-indigo-600 text-white font-bold rounded-full shadow-lg hover:bg-indigo-700 transition-colors transform active:scale-95"
+            className="mt-10 px-12 py-4 bg-indigo-600 text-white font-bold rounded-full shadow-lg hover:bg-indigo-700 transition-colors transform active:scale-95 flex flex-col items-center"
           >
-            Next Note
+            <span className="font-bold">Next Note</span>
+            <span className="text-[9px] opacity-70 font-mono mt-0.5">[SPACE / ENTER]</span>
           </button>
         </div>
       </div>
