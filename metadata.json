@@ -1,0 +1,5 @@
+{
+  "name": "NoteMaster: Musical Flashcards",
+  "description": "An interactive musical note learning application using code-generated SVG staves for high-accuracy flashcards and interactive quizzes.",
+  "requestFramePermissions": []
+}
