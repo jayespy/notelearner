@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Keyboard Test</title>
+    <style>
+        body {
+            font-family: monospace;
+            padding: 40px;
+            background: #1a1a1a;
+            color: #fff;
+        }
+
+        #output {
+            background: #2a2a2a;
+            padding: 20px;
+            border-radius: 8px;
+            min-height: 200px;
+            margin-top: 20px;
+        }
+
+        .key-event {
+            background: #00ff00;
+            color: #000;
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 4px;
+            animation: flash 0.5s;
+        }
+
+        @keyframes flash {
+            from {
+                background: #ffff00;
+            }
+
+            to {
+                background: #00ff00;
+            }
+        }
+
+        #indicator {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #ff0000;
+            color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            font-size: 24px;
+            font-weight: bold;
+            display: none;
+        }
+
+        #indicator.active {
+            display: block;
+            background: #00ff00;
+            color: #000;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>🎹 KEYBOARD TEST PAGE</h1>
+    <p style="font-size: 18px;">Press ANY key on your keyboard...</p>
+    <p>This page will detect keyboard events from ANY source (built-in or external keyboard)</p>
+
+    <div id="indicator">🎹 KEY PRESSED!</div>
+    <div id="output">
+        <div style="opacity: 0.5;">Waiting for keyboard input...</div>
+    </div>
+
+    <script>
+        const output = document.getElementById('output');
+        const indicator = document.getElementById('indicator');
+        let eventCount = 0;
+
+        // Test 1: keydown on window
+        window.addEventListener('keydown', (e) => {
+            eventCount++;
+            console.log('KEYDOWN EVENT:', e);
+
+            indicator.classList.add('active');
+            setTimeout(() => indicator.classList.remove('active'), 500);
+
+            const div = document.createElement('div');
+            div.className = 'key-event';
+            div.innerHTML = `
+                <strong>Event #${eventCount}</strong><br>
+                Key: "${e.key}" | Code: "${e.code}" | KeyCode: ${e.keyCode}<br>
+                Type: ${e.type} | Trusted: ${e.isTrusted} | Time: ${new Date().toLocaleTimeString()}
+            `;
+            output.insertBefore(div, output.firstChild);
+        }, true); // Use capture phase
+
+        // Test 2: keypress on window
+        window.addEventListener('keypress', (e) => {
+            console.log('KEYPRESS EVENT:', e);
+        }, true);
+
+        // Test 3: keyup on window
+        window.addEventListener('keyup', (e) => {
+            console.log('KEYUP EVENT:', e);
+        }, true);
+
+        // Test 4: keydown on document
+        document.addEventListener('keydown', (e) => {
+            console.log('DOCUMENT KEYDOWN:', e);
+        }, true);
+
+        console.log('✅ Keyboard test page loaded');
+        console.log('All event listeners attached');
+        console.log('Press any key to test...');
+    </script>
+</body>
+
+</html>
