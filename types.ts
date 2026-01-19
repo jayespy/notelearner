@@ -7,6 +7,8 @@ export type Accidental = 'sharp' | 'flat' | 'natural' | 'none';
 
 export type DifficultyLevel = 1 | 2 | 3;
 
+export type PracticeMode = 'SINGLE' | 'MULTI' | 'MUSICAL';
+
 export interface MusicalNote {
   name: NoteName;
   octave: number;
@@ -15,12 +17,12 @@ export interface MusicalNote {
 }
 
 export interface Challenge {
-  level: DifficultyLevel;
-  // Level 1: single note
+  mode: PracticeMode;
+  // SINGLE mode: single note
   singleNote?: MusicalNote;
-  // Level 2: sequence of 3-4 notes
+  // MULTI mode: sequence of 3-4 notes
   sequence?: MusicalNote[];
-  // Level 3: parallel treble and bass notes
+  // MUSICAL mode: parallel treble and bass notes
   trebleNotes?: MusicalNote[];
   bassNotes?: MusicalNote[];
 }

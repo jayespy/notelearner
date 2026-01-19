@@ -33,11 +33,11 @@ const ENHARMONIC_BUTTONS: NoteButton[] = [
 const Flashcard: React.FC<FlashcardProps> = ({ challenge, onNext, showAnswer, setShowAnswer, mode, includeAccidentals }) => {
   // Create a combined sequence for validation based on difficulty level
   const noteSequence: MusicalNote[] = React.useMemo(() => {
-    if (challenge.level === 1 && challenge.singleNote) {
+    if (challenge.mode === 'SINGLE' && challenge.singleNote) {
       return [challenge.singleNote];
-    } else if (challenge.level === 2 && challenge.sequence) {
+    } else if (challenge.mode === 'MULTI' && challenge.sequence) {
       return challenge.sequence;
-    } else if (challenge.level === 3 && challenge.trebleNotes && challenge.bassNotes) {
+    } else if (challenge.mode === 'MUSICAL' && challenge.trebleNotes && challenge.bassNotes) {
       // Interleave treble and bass notes (reading order: left to right)
       const combined: MusicalNote[] = [];
       const maxLength = Math.max(challenge.trebleNotes.length, challenge.bassNotes.length);
@@ -72,7 +72,7 @@ const Flashcard: React.FC<FlashcardProps> = ({ challenge, onNext, showAnswer, se
   const showAnswerRef = React.useRef(showAnswer);
   const currentNoteIndexRef = React.useRef(currentNoteIndex);
   const noteSequenceRef = React.useRef(noteSequence);
-  const challengeLevelRef = React.useRef(challenge.level);
+  const challengeModeRef = React.useRef(challenge.mode);
 
   // Update refs when values change
   React.useEffect(() => {
@@ -82,8 +82,8 @@ const Flashcard: React.FC<FlashcardProps> = ({ challenge, onNext, showAnswer, se
     showAnswerRef.current = showAnswer;
     currentNoteIndexRef.current = currentNoteIndex;
     noteSequenceRef.current = noteSequence;
-    challengeLevelRef.current = challenge.level;
-  }, [note, wrongButtonIds, isAutoProgressing, showAnswer, currentNoteIndex, noteSequence, challenge.level]);
+    challengeModeRef.current = challenge.mode;
+  }, [note, wrongButtonIds, isAutoProgressing, showAnswer, currentNoteIndex, noteSequence, challenge.mode]);
 
   // Initialize MIDI
   useEffect(() => {
@@ -123,7 +123,7 @@ const Flashcard: React.FC<FlashcardProps> = ({ challenge, onNext, showAnswer, se
 
       setTimeout(() => {
         onNext(wrongButtonIds.length === 0);
-      }, 1000);
+      }, 400);
     } else {
       if (!wrongButtonIds.includes(button.id)) {
         setWrongButtonIds([...wrongButtonIds, button.id]);
@@ -147,14 +147,14 @@ const Flashcard: React.FC<FlashcardProps> = ({ challenge, onNext, showAnswer, se
 
       try {
         const parsed = midiService.parseNoteName(midiNote.noteName);
-        const level = challengeLevelRef.current;
+        const mode = challengeModeRef.current;
         const sequence = noteSequenceRef.current;
         const currentIndex = currentNoteIndexRef.current;
 
         console.log('Parsed MIDI note:', parsed);
-        console.log('Level:', level, 'Current index:', currentIndex, 'Total notes:', sequence.length);
+        console.log('Mode:', mode, 'Current index:', currentIndex, 'Total notes:', sequence.length);
 
-        if (level === 1) {
+        if (mode === 'SINGLE') {
           // Level 1: Original single-note validation
           const currentNote = sequence[0];
           console.log('Expected note:', { name: currentNote.name, accidental: currentNote.accidental, octave: currentNote.octave });
@@ -172,13 +172,13 @@ const Flashcard: React.FC<FlashcardProps> = ({ challenge, onNext, showAnswer, se
 
             setTimeout(() => {
               onNext(wrongButtonIdsRef.current.length === 0);
-            }, 1000);
+            }, 400);
           } else {
             console.log('❌ Wrong MIDI note');
             setLastMidiNote(`${midiNote.noteName} ❌`);
           }
         } else {
-          // Level 2 & 3: Sequential validation
+          // MULTI & MUSICAL modes: Sequential validation
           const expectedNote = sequence[currentIndex];
           console.log('Expected note at index', currentIndex, ':', { name: expectedNote.name, accidental: expectedNote.accidental, octave: expectedNote.octave });
 
@@ -205,7 +205,7 @@ const Flashcard: React.FC<FlashcardProps> = ({ challenge, onNext, showAnswer, se
               setIsAutoProgressing(true);
               setTimeout(() => {
                 onNext(true);
-              }, 1000);
+              }, 400);
             } else {
               // Move to next note
               setCurrentNoteIndex(currentIndex + 1);
@@ -237,9 +237,9 @@ const Flashcard: React.FC<FlashcardProps> = ({ challenge, onNext, showAnswer, se
     console.log('Current state:', { showAnswer, isAutoProgressing, mode, includeAccidentals });
 
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Disable computer keyboard for Level 2 & 3 (MIDI only)
-      if (challenge.level > 1) {
-        console.log('⌨️ Computer keyboard disabled for Level 2 & 3 (MIDI only)');
+      // Disable computer keyboard for MULTI & MUSICAL modes (MIDI only)
+      if (challenge.mode !== 'SINGLE') {
+        console.log('⌨️ Computer keyboard disabled for MULTI & MUSICAL modes (MIDI only)');
         return;
       }
 

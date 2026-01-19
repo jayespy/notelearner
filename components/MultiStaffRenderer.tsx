@@ -127,24 +127,24 @@ const MultiStaffRenderer: React.FC<MultiStaffRendererProps> = ({ challenge, play
         );
     };
 
-    // Determine dimensions based on difficulty level
+    // Determine dimensions based on practice mode
     let svgWidth = 240;
     let svgHeight = 160;
     let content;
 
-    if (challenge.level === 1 && challenge.singleNote) {
-        // Level 1: Single note
+    if (challenge.mode === 'SINGLE' && challenge.singleNote) {
+        // Single note mode
         svgWidth = 240;
         svgHeight = 160;
         content = renderStaff([challenge.singleNote], challenge.singleNote.clef, 20, 20, 200);
-    } else if (challenge.level === 2 && challenge.sequence) {
-        // Level 2: Sequence of notes
+    } else if (challenge.mode === 'MULTI' && challenge.sequence) {
+        // Multi note mode: Sequence of notes
         const noteCount = challenge.sequence.length;
         svgWidth = 140 + (noteCount * noteSpacing);
         svgHeight = 160;
         content = renderStaff(challenge.sequence, challenge.sequence[0].clef, 20, 20, svgWidth - 40);
-    } else if (challenge.level === 3 && challenge.trebleNotes && challenge.bassNotes) {
-        // Level 3: Grand staff (treble + bass)
+    } else if (challenge.mode === 'MUSICAL' && challenge.trebleNotes && challenge.bassNotes) {
+        // Musical mode: Grand staff (treble + bass)
         const noteCount = Math.max(challenge.trebleNotes.length, challenge.bassNotes.length);
         svgWidth = 140 + (noteCount * noteSpacing);
         svgHeight = 320; // Double height for two staves
@@ -156,7 +156,7 @@ const MultiStaffRenderer: React.FC<MultiStaffRendererProps> = ({ challenge, play
         const lines = [0, 1, 2, 3, 4].map(i => baseline - (i * lineSpacing));
         const middleLineY = lines[2];
 
-        // For Level 3, we need to render notes with interleaved indices
+        // For MUSICAL mode, we need to render notes with interleaved indices
         // Treble notes: indices 0, 2, 4, 6... (even)
         // Bass notes: indices 1, 3, 5, 7... (odd)
         const renderGrandStaff = () => {

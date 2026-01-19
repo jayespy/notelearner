@@ -1,6 +1,7 @@
 
+
 import React, { useState, useCallback, useEffect } from 'react';
-import { Clef, MusicalNote, NoteName, Accidental, AppMode, DifficultyLevel, Challenge } from './types';
+import { Clef, MusicalNote, NoteName, Accidental, AppMode, DifficultyLevel, Challenge, PracticeMode } from './types';
 import Flashcard from './components/Flashcard';
 
 const NOTE_NAMES: NoteName[] = ['C', 'D', 'E', 'F', 'G', 'A', 'B'];
@@ -9,6 +10,7 @@ function App() {
   const [clefPreference, setClefPreference] = useState<Clef>('TREBLE');
   const [includeAccidentals, setIncludeAccidentals] = useState(false);
   const [appMode, setAppMode] = useState<AppMode>('STRICT'); // STRICT = Buttons, REVEAL = Flip
+  const [practiceMode, setPracticeMode] = useState<PracticeMode>('SINGLE');
   const [difficultyLevel, setDifficultyLevel] = useState<DifficultyLevel>(1);
   const [currentChallenge, setCurrentChallenge] = useState<Challenge | null>(null);
   const [showAnswer, setShowAnswer] = useState(false);
@@ -16,47 +18,66 @@ function App() {
 
   const generateRandomNote = useCallback((clef: Clef): MusicalNote => {
     const name = NOTE_NAMES[Math.floor(Math.random() * NOTE_NAMES.length)];
+
+    // Accidentals: 30% probability when enabled
     const accidental: Accidental = includeAccidentals
       ? (Math.random() > 0.7 ? (Math.random() > 0.5 ? 'sharp' : 'flat') : 'none')
       : 'none';
 
     let octave = 4;
+
     if (clef === 'TREBLE') {
-      // Treble Clef range roughly C4 to G5 for beginner learning
-      octave = Math.random() > 0.5 ? 4 : 5;
-      if (octave === 5 && ['A', 'B'].includes(name)) octave = 4;
-      if (octave === 4 && ['C'].includes(name) && Math.random() > 0.5) octave = 5;
+      if (difficultyLevel === 1) {
+        // Level 1: C4-B4 only (100%)
+        octave = 4;
+      } else if (difficultyLevel === 2) {
+        // Level 2: 80% C4-B4, 20% C5-B5
+        octave = Math.random() < 0.8 ? 4 : 5;
+      } else {
+        // Level 3: 80% C4-B4, 20% split 50/50 between C5-B5 or C6-B6
+        const rand = Math.random();
+        if (rand < 0.8) {
+          octave = 4; // Primary range
+        } else {
+          octave = Math.random() < 0.5 ? 5 : 6; // 50/50 between octave 5 and 6
+        }
+      }
     } else {
-      // Bass Clef range roughly E2 to C4
-      octave = Math.random() > 0.5 ? 2 : 3;
-      if (octave === 3 && name === 'C') octave = 4; // Middle C
+      // Bass Clef
+      if (difficultyLevel === 1) {
+        // Level 1: C3-B3 only (100%)
+        octave = 3;
+      } else {
+        // Level 2 & 3: 80% C3-B3, 20% C2-B2 (same for both)
+        octave = Math.random() < 0.8 ? 3 : 2;
+      }
     }
 
     return { name, octave, accidental, clef };
-  }, [includeAccidentals]);
+  }, [includeAccidentals, difficultyLevel]);
 
   const generateChallenge = useCallback(() => {
     let challenge: Challenge;
 
-    if (difficultyLevel === 1) {
-      // Level 1: Single note
+    if (practiceMode === 'SINGLE') {
+      // Single note mode
       challenge = {
-        level: 1,
+        mode: 'SINGLE',
         singleNote: generateRandomNote(clefPreference)
       };
-    } else if (difficultyLevel === 2) {
-      // Level 2: Sequence of 3-4 notes
+    } else if (practiceMode === 'MULTI') {
+      // Multi note mode: Sequence of 3-4 notes
       const count = Math.random() > 0.5 ? 3 : 4;
       const sequence: MusicalNote[] = [];
       for (let i = 0; i < count; i++) {
         sequence.push(generateRandomNote(clefPreference));
       }
       challenge = {
-        level: 2,
+        mode: 'MULTI',
         sequence
       };
     } else {
-      // Level 3: Parallel treble and bass
+      // Musical mode: Parallel treble and bass
       const count = Math.random() > 0.5 ? 2 : 3;
       const trebleNotes: MusicalNote[] = [];
       const bassNotes: MusicalNote[] = [];
@@ -65,7 +86,7 @@ function App() {
         bassNotes.push(generateRandomNote('BASS'));
       }
       challenge = {
-        level: 3,
+        mode: 'MUSICAL',
         trebleNotes,
         bassNotes
       };
@@ -73,7 +94,7 @@ function App() {
 
     setCurrentChallenge(challenge);
     setShowAnswer(false);
-  }, [difficultyLevel, clefPreference, generateRandomNote]);
+  }, [practiceMode, clefPreference, generateRandomNote]);
 
   useEffect(() => {
     generateChallenge();
@@ -124,6 +145,35 @@ function App() {
 
 
               <div>
+                <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Practice Mode</label>
+                <div className="grid grid-cols-3 bg-slate-100 p-1 rounded-xl gap-1">
+                  <button
+                    onClick={() => setPracticeMode('SINGLE')}
+                    className={`py-2 rounded-lg text-xs font-bold transition-all ${practiceMode === 'SINGLE' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                  >
+                    Single
+                  </button>
+                  <button
+                    onClick={() => setPracticeMode('MULTI')}
+                    className={`py-2 rounded-lg text-xs font-bold transition-all ${practiceMode === 'MULTI' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                  >
+                    Multi
+                  </button>
+                  <button
+                    onClick={() => setPracticeMode('MUSICAL')}
+                    className={`py-2 rounded-lg text-xs font-bold transition-all ${practiceMode === 'MUSICAL' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                  >
+                    Musical
+                  </button>
+                </div>
+                <p className="text-[10px] text-slate-400 mt-2">
+                  {practiceMode === 'SINGLE' && '1 note at a time'}
+                  {practiceMode === 'MULTI' && '3-4 notes in sequence'}
+                  {practiceMode === 'MUSICAL' && 'Treble + Bass parallel'}
+                </p>
+              </div>
+
+              <div>
                 <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Difficulty Level</label>
                 <div className="grid grid-cols-3 bg-slate-100 p-1 rounded-xl gap-1">
                   <button
@@ -146,29 +196,31 @@ function App() {
                   </button>
                 </div>
                 <p className="text-[10px] text-slate-400 mt-2">
-                  {difficultyLevel === 1 && '1 note'}
-                  {difficultyLevel === 2 && '3-4 notes in sequence'}
-                  {difficultyLevel === 3 && 'Treble + Bass parallel'}
+                  {difficultyLevel === 1 && 'Single octave only'}
+                  {difficultyLevel === 2 && 'Two octaves (80/20)'}
+                  {difficultyLevel === 3 && 'Three octaves (80/20)'}
                 </p>
               </div>
 
-              <div>
-                <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Select Clef</label>
-                <div className="flex bg-slate-100 p-1 rounded-xl">
-                  <button
-                    onClick={() => setClefPreference('TREBLE')}
-                    className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all ${clefPreference === 'TREBLE' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
-                  >
-                    Treble
-                  </button>
-                  <button
-                    onClick={() => setClefPreference('BASS')}
-                    className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all ${clefPreference === 'BASS' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
-                  >
-                    Bass
-                  </button>
+              {practiceMode !== 'MUSICAL' && (
+                <div>
+                  <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Select Clef</label>
+                  <div className="flex bg-slate-100 p-1 rounded-xl">
+                    <button
+                      onClick={() => setClefPreference('TREBLE')}
+                      className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all ${clefPreference === 'TREBLE' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                    >
+                      Treble
+                    </button>
+                    <button
+                      onClick={() => setClefPreference('BASS')}
+                      className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all ${clefPreference === 'BASS' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                    >
+                      Bass
+                    </button>
+                  </div>
                 </div>
-              </div>
+              )}
 
               <div className="flex items-center justify-between">
                 <div>
