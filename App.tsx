@@ -1,8 +1,10 @@
 
 
+
 import React, { useState, useCallback, useEffect } from 'react';
 import { Clef, MusicalNote, NoteName, Accidental, AppMode, DifficultyLevel, Challenge, PracticeMode } from './types';
 import Flashcard from './components/Flashcard';
+import ContinuousFlow from './components/ContinuousFlow';
 
 const NOTE_NAMES: NoteName[] = ['C', 'D', 'E', 'F', 'G', 'A', 'B'];
 
@@ -107,6 +109,11 @@ function App() {
     }));
     generateChallenge();
   };
+
+  // Memoized function for Multi mode to prevent unnecessary re-renders
+  const generateNoteForMulti = useCallback(() => {
+    return generateRandomNote(clefPreference);
+  }, [generateRandomNote, clefPreference]);
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col items-center py-12 px-4 sm:px-6">
@@ -264,7 +271,13 @@ function App() {
 
         {/* Flashcard Area */}
         <section className="lg:col-span-8 flex flex-col items-center">
-          {currentChallenge ? (
+          {practiceMode === 'MULTI' ? (
+            <ContinuousFlow
+              generateNote={generateNoteForMulti}
+              includeAccidentals={includeAccidentals}
+              clef={clefPreference}
+            />
+          ) : currentChallenge ? (
             <Flashcard
               challenge={currentChallenge}
               onNext={handleNext}
