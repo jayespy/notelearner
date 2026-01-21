@@ -28,3 +28,6 @@ export interface Challenge {
 }
 
 export type AppMode = 'STRICT' | 'REVEAL';
+
+export type Page = 'LEARN' | 'METRONOME';
+

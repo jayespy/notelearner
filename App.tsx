@@ -2,9 +2,10 @@
 
 
 import React, { useState, useCallback, useEffect } from 'react';
-import { Clef, MusicalNote, NoteName, Accidental, AppMode, DifficultyLevel, Challenge, PracticeMode } from './types';
+import { Clef, MusicalNote, NoteName, Accidental, AppMode, DifficultyLevel, Challenge, PracticeMode, Page } from './types';
 import Flashcard from './components/Flashcard';
 import ContinuousFlow from './components/ContinuousFlow';
+import Metronome from './components/Metronome';
 
 const NOTE_NAMES: NoteName[] = ['C', 'D', 'E', 'F', 'G', 'A', 'B'];
 
@@ -17,6 +18,7 @@ function App() {
   const [currentChallenge, setCurrentChallenge] = useState<Challenge | null>(null);
   const [showAnswer, setShowAnswer] = useState(false);
   const [stats, setStats] = useState({ seen: 0, correctFirstTry: 0 });
+  const [activePage, setActivePage] = useState<Page>('LEARN');
 
   const generateRandomNote = useCallback((clef: Clef): MusicalNote => {
     const name = NOTE_NAMES[Math.floor(Math.random() * NOTE_NAMES.length)];
@@ -119,181 +121,208 @@ function App() {
     <div className="min-h-screen bg-slate-50 flex flex-col items-center py-12 px-4 sm:px-6">
       <header className="text-center mb-12">
         <h1 className="text-5xl font-black text-slate-900 tracking-tight font-serif italic mb-2">NoteMaster</h1>
-        <p className="text-slate-500 font-medium">Test your musical knowledge with interactive staves.</p>
+        <p className="text-slate-500 font-medium">Elevate your musical mastery.</p>
       </header>
 
-      <main className="w-full max-w-4xl grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
-        {/* Settings Sidebar */}
-        <section className="lg:col-span-4 space-y-6">
-          <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
-            <h2 className="text-lg font-bold text-slate-800 mb-6 flex items-center">
-              <svg className="w-5 h-5 mr-2 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"></path></svg>
-              Practice Config
-            </h2>
+      {/* Navigation Tabs */}
+      <nav className="mb-12 flex bg-slate-200/50 p-1.5 rounded-[2rem] shadow-inner">
+        <button
+          onClick={() => setActivePage('LEARN')}
+          className={`px-10 py-3.5 rounded-[1.6rem] text-sm font-black transition-all flex items-center space-x-2 ${activePage === 'LEARN' ? 'bg-white text-indigo-600 shadow-xl' : 'text-slate-500 hover:text-slate-700'
+            }`}
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
+          <span>LEARN NOTES</span>
+        </button>
+        <button
+          onClick={() => setActivePage('METRONOME')}
+          className={`px-10 py-3.5 rounded-[1.6rem] text-sm font-black transition-all flex items-center space-x-2 ${activePage === 'METRONOME' ? 'bg-white text-indigo-600 shadow-xl' : 'text-slate-500 hover:text-slate-700'
+            }`}
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+          <span>METRONOME</span>
+        </button>
+      </nav>
 
-            <div className="space-y-6">
-              <div>
-                <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Learning Mode</label>
-                <div className="flex bg-slate-100 p-1 rounded-xl">
-                  <button
-                    onClick={() => setAppMode('STRICT')}
-                    className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all ${appMode === 'STRICT' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
-                  >
-                    Quiz
-                  </button>
-                  <button
-                    onClick={() => setAppMode('REVEAL')}
-                    className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all ${appMode === 'REVEAL' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
-                  >
-                    Study
-                  </button>
-                </div>
-              </div>
+      {activePage === 'LEARN' ? (
+        <main className="w-full max-w-4xl grid grid-cols-1 lg:grid-cols-12 gap-12 items-start animate-in fade-in slide-in-from-bottom-4 duration-700">
+          {/* Settings Sidebar */}
+          <section className="lg:col-span-4 space-y-6">
+            <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+              <h2 className="text-lg font-bold text-slate-800 mb-6 flex items-center">
+                <svg className="w-5 h-5 mr-2 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"></path></svg>
+                Practice Config
+              </h2>
 
-
-              <div>
-                <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Practice Mode</label>
-                <div className="grid grid-cols-3 bg-slate-100 p-1 rounded-xl gap-1">
-                  <button
-                    onClick={() => setPracticeMode('SINGLE')}
-                    className={`py-2 rounded-lg text-xs font-bold transition-all ${practiceMode === 'SINGLE' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
-                  >
-                    Single
-                  </button>
-                  <button
-                    onClick={() => setPracticeMode('MULTI')}
-                    className={`py-2 rounded-lg text-xs font-bold transition-all ${practiceMode === 'MULTI' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
-                  >
-                    Multi
-                  </button>
-                  <button
-                    onClick={() => setPracticeMode('MUSICAL')}
-                    className={`py-2 rounded-lg text-xs font-bold transition-all ${practiceMode === 'MUSICAL' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
-                  >
-                    Musical
-                  </button>
-                </div>
-                <p className="text-[10px] text-slate-400 mt-2">
-                  {practiceMode === 'SINGLE' && '1 note at a time'}
-                  {practiceMode === 'MULTI' && '3-4 notes in sequence'}
-                  {practiceMode === 'MUSICAL' && 'Treble + Bass parallel'}
-                </p>
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Difficulty Level</label>
-                <div className="grid grid-cols-3 bg-slate-100 p-1 rounded-xl gap-1">
-                  <button
-                    onClick={() => setDifficultyLevel(1)}
-                    className={`py-2 rounded-lg text-xs font-bold transition-all ${difficultyLevel === 1 ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
-                  >
-                    Level 1
-                  </button>
-                  <button
-                    onClick={() => setDifficultyLevel(2)}
-                    className={`py-2 rounded-lg text-xs font-bold transition-all ${difficultyLevel === 2 ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
-                  >
-                    Level 2
-                  </button>
-                  <button
-                    onClick={() => setDifficultyLevel(3)}
-                    className={`py-2 rounded-lg text-xs font-bold transition-all ${difficultyLevel === 3 ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
-                  >
-                    Level 3
-                  </button>
-                </div>
-                <p className="text-[10px] text-slate-400 mt-2">
-                  {difficultyLevel === 1 && 'Single octave only'}
-                  {difficultyLevel === 2 && 'Two octaves (80/20)'}
-                  {difficultyLevel === 3 && 'Three octaves (80/20)'}
-                </p>
-              </div>
-
-              {practiceMode !== 'MUSICAL' && (
+              <div className="space-y-6">
                 <div>
-                  <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Select Clef</label>
+                  <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Learning Mode</label>
                   <div className="flex bg-slate-100 p-1 rounded-xl">
                     <button
-                      onClick={() => setClefPreference('TREBLE')}
-                      className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all ${clefPreference === 'TREBLE' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                      onClick={() => setAppMode('STRICT')}
+                      className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all ${appMode === 'STRICT' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
                     >
-                      Treble
+                      Quiz
                     </button>
                     <button
-                      onClick={() => setClefPreference('BASS')}
-                      className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all ${clefPreference === 'BASS' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                      onClick={() => setAppMode('REVEAL')}
+                      className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all ${appMode === 'REVEAL' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
                     >
-                      Bass
+                      Study
                     </button>
                   </div>
                 </div>
-              )}
 
-              <div className="flex items-center justify-between">
+
                 <div>
-                  <h4 className="text-sm font-bold text-slate-700">Accidentals</h4>
-                  <p className="text-xs text-slate-500">Sharps and flats</p>
+                  <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Practice Mode</label>
+                  <div className="grid grid-cols-3 bg-slate-100 p-1 rounded-xl gap-1">
+                    <button
+                      onClick={() => setPracticeMode('SINGLE')}
+                      className={`py-2 rounded-lg text-xs font-bold transition-all ${practiceMode === 'SINGLE' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                    >
+                      Single
+                    </button>
+                    <button
+                      onClick={() => setPracticeMode('MULTI')}
+                      className={`py-2 rounded-lg text-xs font-bold transition-all ${practiceMode === 'MULTI' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                    >
+                      Multi
+                    </button>
+                    <button
+                      onClick={() => setPracticeMode('MUSICAL')}
+                      className={`py-2 rounded-lg text-xs font-bold transition-all ${practiceMode === 'MUSICAL' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                    >
+                      Musical
+                    </button>
+                  </div>
+                  <p className="text-[10px] text-slate-400 mt-2">
+                    {practiceMode === 'SINGLE' && '1 note at a time'}
+                    {practiceMode === 'MULTI' && '3-4 notes in sequence'}
+                    {practiceMode === 'MUSICAL' && 'Treble + Bass parallel'}
+                  </p>
                 </div>
-                <button
-                  onClick={() => setIncludeAccidentals(!includeAccidentals)}
-                  className={`w-12 h-6 rounded-full transition-colors relative ${includeAccidentals ? 'bg-indigo-600' : 'bg-slate-300'}`}
-                >
-                  <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-transform ${includeAccidentals ? 'left-7' : 'left-1'}`} />
-                </button>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Difficulty Level</label>
+                  <div className="grid grid-cols-3 bg-slate-100 p-1 rounded-xl gap-1">
+                    <button
+                      onClick={() => setDifficultyLevel(1)}
+                      className={`py-2 rounded-lg text-xs font-bold transition-all ${difficultyLevel === 1 ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                    >
+                      Level 1
+                    </button>
+                    <button
+                      onClick={() => setDifficultyLevel(2)}
+                      className={`py-2 rounded-lg text-xs font-bold transition-all ${difficultyLevel === 2 ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                    >
+                      Level 2
+                    </button>
+                    <button
+                      onClick={() => setDifficultyLevel(3)}
+                      className={`py-2 rounded-lg text-xs font-bold transition-all ${difficultyLevel === 3 ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                    >
+                      Level 3
+                    </button>
+                  </div>
+                  <p className="text-[10px] text-slate-400 mt-2">
+                    {difficultyLevel === 1 && 'Single octave only'}
+                    {difficultyLevel === 2 && 'Two octaves (80/20)'}
+                    {difficultyLevel === 3 && 'Three octaves (80/20)'}
+                  </p>
+                </div>
+
+                {practiceMode !== 'MUSICAL' && (
+                  <div>
+                    <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Select Clef</label>
+                    <div className="flex bg-slate-100 p-1 rounded-xl">
+                      <button
+                        onClick={() => setClefPreference('TREBLE')}
+                        className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all ${clefPreference === 'TREBLE' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                      >
+                        Treble
+                      </button>
+                      <button
+                        onClick={() => setClefPreference('BASS')}
+                        className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all ${clefPreference === 'BASS' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                      >
+                        Bass
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h4 className="text-sm font-bold text-slate-700">Accidentals</h4>
+                    <p className="text-xs text-slate-500">Sharps and flats</p>
+                  </div>
+                  <button
+                    onClick={() => setIncludeAccidentals(!includeAccidentals)}
+                    className={`w-12 h-6 rounded-full transition-colors relative ${includeAccidentals ? 'bg-indigo-600' : 'bg-slate-300'}`}
+                  >
+                    <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-transform ${includeAccidentals ? 'left-7' : 'left-1'}`} />
+                  </button>
+                </div>
+              </div>
+
+              <div className="mt-8 pt-8 border-t border-slate-100">
+                <div className="flex justify-between items-center text-sm mb-2">
+                  <span className="text-slate-500 font-medium">Session Accuracy</span>
+                  <span className="text-indigo-600 font-bold">{stats.seen === 0 ? 0 : Math.round((stats.correctFirstTry / stats.seen) * 100)}%</span>
+                </div>
+                <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+                  <div className="bg-emerald-500 h-full rounded-full transition-all duration-500" style={{ width: `${stats.seen === 0 ? 0 : (stats.correctFirstTry / stats.seen) * 100}%` }} />
+                </div>
+                <div className="flex justify-between mt-3 text-[10px] text-slate-400 uppercase tracking-wider font-bold">
+                  <span>Attempts: {stats.seen}</span>
+                  <span>Mastery Goal: 90%</span>
+                </div>
               </div>
             </div>
 
-            <div className="mt-8 pt-8 border-t border-slate-100">
-              <div className="flex justify-between items-center text-sm mb-2">
-                <span className="text-slate-500 font-medium">Session Accuracy</span>
-                <span className="text-indigo-600 font-bold">{stats.seen === 0 ? 0 : Math.round((stats.correctFirstTry / stats.seen) * 100)}%</span>
+            <div className="bg-slate-800 p-6 rounded-2xl shadow-lg text-white overflow-hidden relative">
+              <div className="relative z-10">
+                <h3 className="font-bold mb-1">Quick Note</h3>
+                <p className="text-slate-400 text-sm leading-relaxed">
+                  In <strong>Quiz Mode</strong>, identifying a note with an accidental requires recognizing both the position and the symbol.
+                </p>
               </div>
-              <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
-                <div className="bg-emerald-500 h-full rounded-full transition-all duration-500" style={{ width: `${stats.seen === 0 ? 0 : (stats.correctFirstTry / stats.seen) * 100}%` }} />
-              </div>
-              <div className="flex justify-between mt-3 text-[10px] text-slate-400 uppercase tracking-wider font-bold">
-                <span>Attempts: {stats.seen}</span>
-                <span>Mastery Goal: 90%</span>
-              </div>
+              <div className="absolute -bottom-4 -right-4 text-7xl text-slate-700 font-serif rotate-12 select-none">𝄞</div>
             </div>
-          </div>
+          </section>
 
-          <div className="bg-slate-800 p-6 rounded-2xl shadow-lg text-white overflow-hidden relative">
-            <div className="relative z-10">
-              <h3 className="font-bold mb-1">Quick Note</h3>
-              <p className="text-slate-400 text-sm leading-relaxed">
-                In <strong>Quiz Mode</strong>, identifying a note with an accidental requires recognizing both the position and the symbol.
-              </p>
-            </div>
-            <div className="absolute -bottom-4 -right-4 text-7xl text-slate-700 font-serif rotate-12 select-none">𝄞</div>
-          </div>
-        </section>
+          {/* Flashcard Area */}
+          <section className="lg:col-span-8 flex flex-col items-center">
+            {practiceMode === 'MULTI' ? (
+              <ContinuousFlow
+                generateNote={generateNoteForMulti}
+                includeAccidentals={includeAccidentals}
+                clef={clefPreference}
+              />
+            ) : currentChallenge ? (
+              <Flashcard
+                challenge={currentChallenge}
+                onNext={handleNext}
+                showAnswer={showAnswer}
+                setShowAnswer={setShowAnswer}
+                mode={appMode}
+                includeAccidentals={includeAccidentals}
+              />
+            ) : (
+              <div className="animate-pulse flex flex-col items-center justify-center p-24 w-full bg-white rounded-3xl border border-slate-100">
+                <div className="w-16 h-16 bg-slate-100 rounded-full mb-4"></div>
+                <div className="w-48 h-4 bg-slate-100 rounded"></div>
+              </div>
+            )}
+          </section>
+        </main>
+      ) : (
+        <div className="w-full animate-in fade-in slide-in-from-bottom-4 duration-700">
+          <Metronome />
+        </div>
+      )}
 
-        {/* Flashcard Area */}
-        <section className="lg:col-span-8 flex flex-col items-center">
-          {practiceMode === 'MULTI' ? (
-            <ContinuousFlow
-              generateNote={generateNoteForMulti}
-              includeAccidentals={includeAccidentals}
-              clef={clefPreference}
-            />
-          ) : currentChallenge ? (
-            <Flashcard
-              challenge={currentChallenge}
-              onNext={handleNext}
-              showAnswer={showAnswer}
-              setShowAnswer={setShowAnswer}
-              mode={appMode}
-              includeAccidentals={includeAccidentals}
-            />
-          ) : (
-            <div className="animate-pulse flex flex-col items-center justify-center p-24 w-full bg-white rounded-3xl border border-slate-100">
-              <div className="w-16 h-16 bg-slate-100 rounded-full mb-4"></div>
-              <div className="w-48 h-4 bg-slate-100 rounded"></div>
-            </div>
-          )}
-        </section>
-      </main>
 
       <footer className="mt-24 text-slate-400 text-sm flex items-center space-x-2">
         <span>Procedural SVG Music Engine • Accurate Note Placement</span>
